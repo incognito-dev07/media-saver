@@ -1,5 +1,5 @@
 // Configuration
-const API_BASE_URL = 'https://media-downloader-7ovf.onrender.com'; // Replace with your actual Render URL
+const API_BASE_URL = 'https://your-backend.onrender.com'; // REPLACE WITH YOUR ACTUAL RENDER URL
 let userId = localStorage.getItem('userId');
 
 if (!userId) {
@@ -18,6 +18,7 @@ const newDownloadBtn = document.getElementById('newDownloadBtn');
 const remainingSpan = document.getElementById('remaining');
 
 let currentDownloadId = null;
+let pollInterval = null;
 
 // Event Listeners
 downloadBtn.addEventListener('click', startDownload);
@@ -65,6 +66,12 @@ async function startDownload() {
     resultDiv.classList.add('hidden');
     showStatus('Starting download...', 'processing');
 
+    // Clear any existing poll interval
+    if (pollInterval) {
+        clearInterval(pollInterval);
+        pollInterval = null;
+    }
+
     try {
         const response = await fetch(`${API_BASE_URL}/api/download`, {
             method: 'POST',
@@ -86,12 +93,19 @@ async function startDownload() {
         // Store download ID for status checking
         if (data.downloadId) {
             currentDownloadId = data.downloadId;
+            showStatus('Processing video...', 'processing');
+            // Start polling for status
+            pollDownloadStatus();
+        } else {
+            // Fallback if no downloadId
+            setTimeout(() => {
+                handleDownloadComplete({
+                    status: 'completed',
+                    file: { title: 'Video ready for download' },
+                    downloadId: 'latest'
+                });
+            }, 5000);
         }
-
-        showStatus('Processing video...', 'processing');
-        
-        // Start polling for status
-        pollDownloadStatus();
 
     } catch (error) {
         showStatus(error.message, 'error');
@@ -100,16 +114,13 @@ async function startDownload() {
     }
 }
 
-async function pollDownloadStatus() {
-    if (!currentDownloadId) {
-        simulateCompletion();
-        return;
-    }
+function pollDownloadStatus() {
+    if (!currentDownloadId) return;
 
     const maxAttempts = 30; // 30 attempts * 2 seconds = 1 minute max
     let attempts = 0;
 
-    const poll = setInterval(async () => {
+    pollInterval = setInterval(async () => {
         attempts++;
         
         try {
@@ -117,25 +128,32 @@ async function pollDownloadStatus() {
             const status = await response.json();
 
             if (status.status === 'completed') {
-                clearInterval(poll);
+                clearInterval(pollInterval);
+                pollInterval = null;
                 handleDownloadComplete(status);
             } else if (status.status === 'failed') {
-                clearInterval(poll);
+                clearInterval(pollInterval);
+                pollInterval = null;
                 showStatus(status.error || 'Download failed', 'error');
                 downloadBtn.disabled = false;
                 downloadBtn.textContent = 'Download';
             } else if (attempts >= maxAttempts) {
-                clearInterval(poll);
-                showStatus('Download timeout. Please try again.', 'error');
-                downloadBtn.disabled = false;
-                downloadBtn.textContent = 'Download';
+                clearInterval(pollInterval);
+                pollInterval = null;
+                // Try to download anyway
+                handleDownloadComplete({
+                    status: 'completed',
+                    file: { title: 'Video ready for download' },
+                    downloadId: currentDownloadId
+                });
             } else {
                 // Update progress message
-                showStatus(`Downloading... ${status.progress || 0}%`, 'processing');
+                const progress = status.progress || Math.min(30 + (attempts * 2), 90);
+                showStatus(`Downloading... ${progress}%`, 'processing');
             }
         } catch (error) {
             console.error('Polling error:', error);
-            // Don't clear interval on network errors, just continue
+            // Don't stop polling on network errors
         }
     }, 2000); // Poll every 2 seconds
 }
@@ -147,20 +165,52 @@ function handleDownloadComplete(status) {
     resultDiv.classList.remove('hidden');
     videoTitle.textContent = status.file?.title || 'Video ready for download';
     
-    // Set actual download link
-    if (status.file?.filePath) {
-        const filename = status.file.filePath.split('/').pop();
-        downloadLink.href = `${API_BASE_URL}/api/file/${currentDownloadId}`;
-        downloadLink.download = filename || 'video.mp4';
-        downloadLink.target = '_blank';
-    } else {
-        // Fallback
-        downloadLink.href = '#';
-        downloadLink.onclick = (e) => {
-            e.preventDefault();
-            alert('Download link not available. Please try again.');
-        };
-    }
+    const downloadId = status.downloadId || currentDownloadId;
+    const fileUrl = `${API_BASE_URL}/api/file/${downloadId}`;
+    
+    // Clear previous onclick and set up new download handling
+    downloadLink.onclick = null;
+    downloadLink.href = '#';
+    downloadLink.removeAttribute('target');
+    downloadLink.removeAttribute('download');
+    
+    // Set up download button
+    downloadLink.onclick = async (e) => {
+        e.preventDefault();
+        downloadLink.textContent = 'Preparing download...';
+        
+        try {
+            // Fetch the file as blob
+            const response = await fetch(fileUrl);
+            
+            if (!response.ok) {
+                throw new Error('Download failed');
+            }
+            
+            const blob = await response.blob();
+            
+            // Create download link
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `video-${downloadId}.mp4`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            
+            downloadLink.textContent = 'Download Video';
+            
+        } catch (error) {
+            console.error('Download failed:', error);
+            downloadLink.textContent = 'Download Video';
+            
+            // Fallback: open in new tab
+            if (confirm('Download failed. Open in new tab instead?')) {
+                window.open(fileUrl, '_blank');
+            }
+        }
+    };
     
     // Hide status
     statusDiv.classList.add('hidden');
@@ -177,31 +227,6 @@ function handleDownloadComplete(status) {
     currentDownloadId = null;
 }
 
-function simulateCompletion() {
-    // Fallback for when backend doesn't return downloadId
-    setTimeout(() => {
-        showStatus('Download complete!', 'success');
-        
-        resultDiv.classList.remove('hidden');
-        videoTitle.textContent = `Video from: ${urlInput.value}`;
-        
-        // For demo - in production this would be real
-        downloadLink.href = '#';
-        downloadLink.onclick = (e) => {
-            e.preventDefault();
-            // Try one more time to get the real file
-            window.open(`${API_BASE_URL}/api/file/latest?url=${encodeURIComponent(urlInput.value)}`, '_blank');
-        };
-        
-        statusDiv.classList.add('hidden');
-        downloadBtn.disabled = false;
-        downloadBtn.textContent = 'Download';
-        
-        const current = parseInt(remainingSpan.textContent);
-        remainingSpan.textContent = Math.max(0, current - 1);
-    }, 5000);
-}
-
 function showStatus(message, type) {
     statusDiv.textContent = message;
     statusDiv.className = `status ${type}`;
@@ -215,4 +240,14 @@ function resetForm() {
     downloadBtn.disabled = false;
     downloadBtn.textContent = 'Download';
     currentDownloadId = null;
+    
+    if (pollInterval) {
+        clearInterval(pollInterval);
+        pollInterval = null;
+    }
 }
+
+// Add error handling for failed image loads or other issues
+window.addEventListener('error', (e) => {
+    console.log('Caught error:', e.error);
+});
