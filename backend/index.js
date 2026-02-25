@@ -20,7 +20,6 @@ app.use(express.urlencoded({ extended: true }));
 global.downloadStatus = new Map();
 global.userStats = new Map();
 
-// Cleanup old files
 setInterval(() => {
   helpers.cleanupOldFiles();
 }, config.CLEANUP_INTERVAL);
@@ -63,7 +62,6 @@ app.post('/api/download', async (req, res) => {
     // Generate download ID
     const downloadId = Date.now().toString();
 
-    // Send initial response with downloadId
     res.json({ 
       status: 'processing', 
       message: 'Download started',
@@ -112,7 +110,7 @@ app.get('/api/file/:downloadId', async (req, res) => {
     path.join(config.PATHS.DOWNLOADS, downloadId)
   ];
   
-  // Also try to find any file that starts with the downloadId
+  // Find any file that starts with the downloadId
   try {
     const files = await fs.readdir(config.PATHS.DOWNLOADS);
     const matchingFile = files.find(f => f.startsWith(downloadId));

@@ -16,17 +16,9 @@ class Logger {
     fs.appendFileSync(this.logFile, logMessage + '\n');
   }
 
-  info(message) {
-    this.log('info', message);
-  }
-
-  error(message) {
-    this.log('error', message);
-  }
-
-  warn(message) {
-    this.log('warn', message);
-  }
+  info(message) { this.log('info', message); }
+  error(message) { this.log('error', message); }
+  warn(message) { this.log('warn', message); }
 }
 
 module.exports = new Logger();
