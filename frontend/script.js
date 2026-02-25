@@ -1,5 +1,5 @@
 // Configuration
-const API_BASE_URL = 'https://your-backend.onrender.com'; // REPLACE WITH YOUR ACTUAL RENDER URL
+const API_BASE_URL = 'https://media-downloader-7ovf.onrender.com'; // REPLACE WITH YOUR ACTUAL RENDER URL
 let userId = localStorage.getItem('userId');
 
 if (!userId) {
