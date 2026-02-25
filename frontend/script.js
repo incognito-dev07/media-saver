@@ -1,5 +1,5 @@
 // Configuration
-const API_BASE_URL = 'https://media-downloader-7ovf.onrender.com'; // Replace with your Render URL
+const API_BASE_URL = 'https://media-downloader-7ovf.onrender.com'; // Replace with your actual Render URL
 let userId = localStorage.getItem('userId');
 
 if (!userId) {
@@ -17,6 +17,8 @@ const downloadLink = document.getElementById('downloadLink');
 const newDownloadBtn = document.getElementById('newDownloadBtn');
 const remainingSpan = document.getElementById('remaining');
 
+let currentDownloadId = null;
+
 // Event Listeners
 downloadBtn.addEventListener('click', startDownload);
 newDownloadBtn.addEventListener('click', resetForm);
@@ -30,8 +32,10 @@ window.addEventListener('load', checkLimits);
 async function checkLimits() {
     try {
         const response = await fetch(`${API_BASE_URL}/api/limits/${userId}`);
-        const data = await response.json();
-        remainingSpan.textContent = data.remaining;
+        if (response.ok) {
+            const data = await response.json();
+            remainingSpan.textContent = data.remaining;
+        }
     } catch (error) {
         console.error('Failed to check limits:', error);
     }
@@ -42,6 +46,14 @@ async function startDownload() {
     
     if (!url) {
         showStatus('Please enter a URL', 'error');
+        return;
+    }
+
+    // Validate URL format
+    try {
+        new URL(url);
+    } catch {
+        showStatus('Invalid URL format', 'error');
         return;
     }
 
@@ -59,7 +71,10 @@ async function startDownload() {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ url, userId })
+            body: JSON.stringify({ 
+                url: url, 
+                userId: userId 
+            })
         });
 
         const data = await response.json();
@@ -68,10 +83,15 @@ async function startDownload() {
             throw new Error(data.error || 'Download failed');
         }
 
-        showStatus(data.message, 'success');
+        // Store download ID for status checking
+        if (data.downloadId) {
+            currentDownloadId = data.downloadId;
+        }
+
+        showStatus('Processing video...', 'processing');
         
-        // Poll for completion (simplified - in production, use websockets)
-        setTimeout(() => checkDownloadStatus(url), 3000);
+        // Start polling for status
+        pollDownloadStatus();
 
     } catch (error) {
         showStatus(error.message, 'error');
@@ -80,26 +100,67 @@ async function startDownload() {
     }
 }
 
-function checkDownloadStatus(url) {
-    // For demo purposes, we'll simulate completion
-    // In production, you'd poll an actual status endpoint
-    simulateCompletion();
+async function pollDownloadStatus() {
+    if (!currentDownloadId) {
+        simulateCompletion();
+        return;
+    }
+
+    const maxAttempts = 30; // 30 attempts * 2 seconds = 1 minute max
+    let attempts = 0;
+
+    const poll = setInterval(async () => {
+        attempts++;
+        
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/status/${currentDownloadId}`);
+            const status = await response.json();
+
+            if (status.status === 'completed') {
+                clearInterval(poll);
+                handleDownloadComplete(status);
+            } else if (status.status === 'failed') {
+                clearInterval(poll);
+                showStatus(status.error || 'Download failed', 'error');
+                downloadBtn.disabled = false;
+                downloadBtn.textContent = 'Download';
+            } else if (attempts >= maxAttempts) {
+                clearInterval(poll);
+                showStatus('Download timeout. Please try again.', 'error');
+                downloadBtn.disabled = false;
+                downloadBtn.textContent = 'Download';
+            } else {
+                // Update progress message
+                showStatus(`Downloading... ${status.progress || 0}%`, 'processing');
+            }
+        } catch (error) {
+            console.error('Polling error:', error);
+            // Don't clear interval on network errors, just continue
+        }
+    }, 2000); // Poll every 2 seconds
 }
 
-function simulateCompletion() {
-    // Simulate successful download
+function handleDownloadComplete(status) {
     showStatus('Download complete!', 'success');
     
     // Show result section
     resultDiv.classList.remove('hidden');
-    videoTitle.textContent = `Video from: ${urlInput.value}`;
+    videoTitle.textContent = status.file?.title || 'Video ready for download';
     
-    // Set download link (in production, this would be a real file URL)
-    downloadLink.href = '#';
-    downloadLink.onclick = (e) => {
-        e.preventDefault();
-        alert('In production, this would download your video!\n\nFor demo purposes, we\'re simulating the download.');
-    };
+    // Set actual download link
+    if (status.file?.filePath) {
+        const filename = status.file.filePath.split('/').pop();
+        downloadLink.href = `${API_BASE_URL}/api/file/${currentDownloadId}`;
+        downloadLink.download = filename || 'video.mp4';
+        downloadLink.target = '_blank';
+    } else {
+        // Fallback
+        downloadLink.href = '#';
+        downloadLink.onclick = (e) => {
+            e.preventDefault();
+            alert('Download link not available. Please try again.');
+        };
+    }
     
     // Hide status
     statusDiv.classList.add('hidden');
@@ -111,6 +172,34 @@ function simulateCompletion() {
     // Update remaining limit
     const current = parseInt(remainingSpan.textContent);
     remainingSpan.textContent = Math.max(0, current - 1);
+    
+    // Clear current download ID
+    currentDownloadId = null;
+}
+
+function simulateCompletion() {
+    // Fallback for when backend doesn't return downloadId
+    setTimeout(() => {
+        showStatus('Download complete!', 'success');
+        
+        resultDiv.classList.remove('hidden');
+        videoTitle.textContent = `Video from: ${urlInput.value}`;
+        
+        // For demo - in production this would be real
+        downloadLink.href = '#';
+        downloadLink.onclick = (e) => {
+            e.preventDefault();
+            // Try one more time to get the real file
+            window.open(`${API_BASE_URL}/api/file/latest?url=${encodeURIComponent(urlInput.value)}`, '_blank');
+        };
+        
+        statusDiv.classList.add('hidden');
+        downloadBtn.disabled = false;
+        downloadBtn.textContent = 'Download';
+        
+        const current = parseInt(remainingSpan.textContent);
+        remainingSpan.textContent = Math.max(0, current - 1);
+    }, 5000);
 }
 
 function showStatus(message, type) {
@@ -125,4 +214,5 @@ function resetForm() {
     statusDiv.classList.add('hidden');
     downloadBtn.disabled = false;
     downloadBtn.textContent = 'Download';
+    currentDownloadId = null;
 }
