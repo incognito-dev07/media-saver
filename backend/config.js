@@ -2,7 +2,6 @@ require('dotenv').config();
 const path = require('path');
 
 module.exports = {
-  BOT_TOKEN: process.env.BOT_TOKEN,
   MAX_FILE_SIZE: parseInt(process.env.MAX_FILE_SIZE) || 50,
   MAX_REQUESTS_PER_USER: parseInt(process.env.MAX_REQUESTS_PER_USER) || 15,
   TIME_WINDOW: parseInt(process.env.TIME_WINDOW) || 3600,

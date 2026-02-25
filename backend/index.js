@@ -2,7 +2,6 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs-extra');
-const TelegramBot = require('node-telegram-bot-api');
 require('dotenv').config();
 
 const config = require('./config');
@@ -17,14 +16,6 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Initialize Telegram Bot (optional - can send notifications)
-let bot = null;
-if (process.env.BOT_TOKEN) {
-  bot = new TelegramBot(process.env.BOT_TOKEN, { polling: false });
-}
-
-// Rate limiting store
-const rateLimit = new Map();
 // Global status tracking
 global.downloadStatus = new Map();
 global.userStats = new Map();
@@ -203,12 +194,6 @@ async function processDownload(url, userId, platform, downloadId) {
       });
       
       logger.info(`Download completed: ${downloadId}`);
-      
-      // Optional: Send notification via Telegram
-      if (bot && process.env.ADMIN_CHAT_ID) {
-        bot.sendMessage(process.env.ADMIN_CHAT_ID, 
-          `✅ Download completed: ${platform}\n${url}`);
-      }
       
       // Schedule file deletion after 1 hour
       setTimeout(async () => {
