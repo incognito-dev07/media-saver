@@ -25,6 +25,9 @@ if (process.env.BOT_TOKEN) {
 
 // Rate limiting store
 const rateLimit = new Map();
+// Global status tracking
+global.downloadStatus = new Map();
+global.userStats = new Map();
 
 // Cleanup old files
 setInterval(() => {
@@ -66,15 +69,19 @@ app.post('/api/download', async (req, res) => {
       return res.status(429).json({ error: 'Rate limit exceeded. Try again later.' });
     }
 
-    // Send initial response
+    // Generate download ID
+    const downloadId = Date.now().toString();
+
+    // Send initial response with downloadId
     res.json({ 
       status: 'processing', 
       message: 'Download started',
-      platform 
+      platform,
+      downloadId
     });
 
     // Process download asynchronously
-    processDownload(url, userId, platform).catch(console.error);
+    processDownload(url, userId, platform, downloadId).catch(console.error);
 
   } catch (error) {
     logger.error(`API Error: ${error.message}`);
@@ -85,15 +92,15 @@ app.post('/api/download', async (req, res) => {
 // Check status endpoint
 app.get('/api/status/:downloadId', (req, res) => {
   const { downloadId } = req.params;
-  const status = global.downloadStatus?.get(downloadId) || { status: 'not_found' };
+  const status = global.downloadStatus.get(downloadId) || { status: 'not_found' };
   res.json(status);
 });
 
 // Get user limits
 app.get('/api/limits/:userId', (req, res) => {
   const { userId } = req.params;
-  const stats = global.userStats?.get(userId) || { downloads: 0 };
-  const remaining = Math.max(0, config.MAX_REQUESTS_PER_USER - stats.downloads);
+  const stats = global.userStats.get(userId) || { downloads: 0 };
+  const remaining = Math.max(0, config.MAX_REQUESTS_PER_USER - (stats.downloads || 0));
   
   res.json({
     remaining,
@@ -102,16 +109,67 @@ app.get('/api/limits/:userId', (req, res) => {
   });
 });
 
+// Serve downloaded files
+app.get('/api/file/:downloadId', async (req, res) => {
+  const { downloadId } = req.params;
+  
+  // Try different possible file extensions
+  const possiblePaths = [
+    path.join(config.PATHS.DOWNLOADS, `${downloadId}.mp4`),
+    path.join(config.PATHS.DOWNLOADS, `${downloadId}.mkv`),
+    path.join(config.PATHS.DOWNLOADS, `${downloadId}.webm`),
+    path.join(config.PATHS.DOWNLOADS, downloadId)
+  ];
+  
+  // Also try to find any file that starts with the downloadId
+  try {
+    const files = await fs.readdir(config.PATHS.DOWNLOADS);
+    const matchingFile = files.find(f => f.startsWith(downloadId));
+    if (matchingFile) {
+      possiblePaths.push(path.join(config.PATHS.DOWNLOADS, matchingFile));
+    }
+  } catch (err) {
+    // Ignore read error
+  }
+  
+  // Try each possible path
+  for (const filePath of possiblePaths) {
+    try {
+      if (await fs.pathExists(filePath)) {
+        const stats = await fs.stat(filePath);
+        
+        // Set proper headers
+        res.setHeader('Content-Type', 'video/mp4');
+        res.setHeader('Content-Disposition', `attachment; filename="video-${downloadId}.mp4"`);
+        res.setHeader('Content-Length', stats.size);
+        
+        // Stream the file
+        const fileStream = fs.createReadStream(filePath);
+        fileStream.pipe(res);
+        
+        logger.info(`Serving file: ${filePath}`);
+        return;
+      }
+    } catch (err) {
+      logger.error(`Error serving ${filePath}: ${err.message}`);
+    }
+  }
+  
+  // If we get here, no file was found
+  logger.error(`File not found for downloadId: ${downloadId}`);
+  res.status(404).json({ error: 'File not found or expired' });
+});
+
 // Download processing function
-async function processDownload(url, userId, platform) {
-  const downloadId = Date.now().toString();
-  const downloadPath = path.join(config.PATHS.DOWNLOADS, `${downloadId}.mp4`);
+async function processDownload(url, userId, platform, downloadId) {
+  const filename = `${downloadId}.mp4`;
+  const downloadPath = path.join(config.PATHS.DOWNLOADS, filename);
   
-  // Initialize status tracking
-  if (!global.downloadStatus) global.downloadStatus = new Map();
-  if (!global.userStats) global.userStats = new Map();
-  
-  global.downloadStatus.set(downloadId, { status: 'downloading', progress: 0 });
+  global.downloadStatus.set(downloadId, { 
+    status: 'downloading', 
+    progress: 0,
+    downloadId: downloadId
+  });
   
   try {
     // Update user stats
@@ -122,28 +180,54 @@ async function processDownload(url, userId, platform) {
     // Load appropriate handler
     const handler = require(`./handlers/${platform}`);
     
-    global.downloadStatus.set(downloadId, { status: 'downloading', progress: 30 });
+    global.downloadStatus.set(downloadId, { 
+      status: 'downloading', 
+      progress: 30,
+      downloadId: downloadId 
+    });
     
     // Download video
     const result = await handler.download(url, downloadPath);
     
-    global.downloadStatus.set(downloadId, { status: 'completed', progress: 100, file: result });
-    
-    // Optional: Send notification via Telegram
-    if (bot) {
-      bot.sendMessage(process.env.ADMIN_CHAT_ID || userId, 
-        `✅ Download completed: ${platform}\n${url}`);
+    // Verify file exists
+    if (await fs.pathExists(downloadPath)) {
+      global.downloadStatus.set(downloadId, { 
+        status: 'completed', 
+        progress: 100, 
+        file: {
+          ...result,
+          filePath: downloadPath,
+          filename: filename
+        },
+        downloadId: downloadId
+      });
+      
+      logger.info(`Download completed: ${downloadId}`);
+      
+      // Optional: Send notification via Telegram
+      if (bot && process.env.ADMIN_CHAT_ID) {
+        bot.sendMessage(process.env.ADMIN_CHAT_ID, 
+          `✅ Download completed: ${platform}\n${url}`);
+      }
+      
+      // Schedule file deletion after 1 hour
+      setTimeout(async () => {
+        await helpers.safeDelete(downloadPath);
+        global.downloadStatus.delete(downloadId);
+        logger.info(`Deleted file: ${downloadId}`);
+      }, 3600000);
+      
+    } else {
+      throw new Error('File was not created');
     }
-    
-    // Schedule file deletion after 1 hour
-    setTimeout(async () => {
-      await helpers.safeDelete(downloadPath);
-      global.downloadStatus.delete(downloadId);
-    }, 3600000);
     
   } catch (error) {
     logger.error(`Download failed: ${error.message}`);
-    global.downloadStatus.set(downloadId, { status: 'failed', error: error.message });
+    global.downloadStatus.set(downloadId, { 
+      status: 'failed', 
+      error: error.message,
+      downloadId: downloadId 
+    });
     
     // Decrement user stats on failure
     const stats = global.userStats.get(userId);
@@ -154,32 +238,10 @@ async function processDownload(url, userId, platform) {
   }
 }
 
-// Serve downloaded files (temporary)
-app.get('/api/file/:downloadId', async (req, res) => {
-  const { downloadId } = req.params;
-  const filePath = path.join(config.PATHS.DOWNLOADS, `${downloadId}.mp4`);
-  
-  try {
-    if (await fs.pathExists(filePath)) {
-      res.setHeader('Content-Type', 'video/mp4');
-      res.setHeader('Content-Disposition', `attachment; filename="video-${downloadId}.mp4"`);
-      
-      const fileStream = fs.createReadStream(filePath);
-      fileStream.pipe(res);
-      
-      // Don't delete immediately - let the scheduled cleanup handle it
-    } else {
-      res.status(404).json({ error: 'File not found or expired' });
-    }
-  } catch (error) {
-    res.status(500).json({ error: 'Error serving file' });
-  }
-});
-
 app.listen(PORT, () => {
   logger.info(`Backend API running on port ${PORT}`);
 });
 
 // Create required directories
-fs.ensureDirSync(path.join(__dirname, 'database', 'downloads'));
-fs.ensureDirSync(path.join(__dirname, 'logs'));
+fs.ensureDirSync(config.PATHS.DOWNLOADS);
+fs.ensureDirSync(config.PATHS.LOGS);
