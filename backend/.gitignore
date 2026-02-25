@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Environment
+.env
+.env.local
+
+# Downloads and temp files
+database/downloads/
+database/cookies.json
+*.mp4
+*.mkv
+*.webm
+
+# Logs
+logs/
+*.log
+
+# yt-dlp binary
+yt-dlp
+
+# OS files
+.DS_Store

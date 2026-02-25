@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Downloader</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎬 Video Downloader</h1>
+            <p>Download videos from YouTube, TikTok, Instagram, and Facebook</p>
+        </header>
+
+        <main>
+            <div class="input-section">
+                <input 
+                    type="url" 
+                    id="urlInput" 
+                    placeholder="Paste video URL here..."
+                    autocomplete="off"
+                >
+                <button id="downloadBtn">Download</button>
+            </div>
+
+            <div class="supported-platforms">
+                <span>Supported:</span>
+                <span class="platform">YouTube</span>
+                <span class="platform">TikTok</span>
+                <span class="platform">Instagram</span>
+                <span class="platform">Facebook</span>
+            </div>
+
+            <div id="status" class="status hidden"></div>
+            
+            <div id="result" class="result hidden">
+                <h3>Download Complete! ✅</h3>
+                <div class="video-info">
+                    <p id="videoTitle"></p>
+                </div>
+                <a id="downloadLink" class="download-btn">Download Video</a>
+                <button id="newDownloadBtn" class="new-btn">New Download</button>
+            </div>
+
+            <div class="limit-info">
+                <span>📊 Daily Limit: <span id="remaining">15</span>/15 remaining</span>
+            </div>
+        </main>
+
+        <footer>
+            <p>Files are temporarily stored and automatically deleted after 1 hour</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

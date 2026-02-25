@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Environment files
+.env
+.env.local
+.env.production
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Backend specific (but keep structure)
+backend/node_modules/
+backend/.env
+backend/database/downloads/
+backend/database/cookies.json
+backend/logs/
+backend/yt-dlp
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
