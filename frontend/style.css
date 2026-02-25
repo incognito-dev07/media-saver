@@ -354,7 +354,7 @@ body {
 .features-heading {
   text-align: center;
   color: var(--accent-primary);
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
   font-size: 1.5rem;
   display: flex;
   align-items: center;
@@ -439,7 +439,7 @@ body {
   }
   
   .features{
-    padding: 2rem 1rem;
+    padding: 1.2rem 1rem;
   }
 
   .feature-grid {
