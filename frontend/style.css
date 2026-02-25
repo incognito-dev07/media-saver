@@ -419,7 +419,7 @@ body {
 /* Mobile Responsive */
 @media (max-width: 768px) {
   .nav-container {
-    padding: 0.5rem;
+    padding: 0.7rem 0.5rem;
   }
 
   .container {

@@ -8,7 +8,6 @@ const execPromise = util.promisify(exec);
 
 module.exports.download = async (url, outputPath) => {
   try {
-    // Instagram often needs cookies and specific format
     const command = `./yt-dlp -f "best[height<=${config.MAX_QUALITY}]" --cookies cookies.txt --no-check-certificate -o "${outputPath}" --quiet "${url}"`;
     await execPromise(command, { timeout: config.DOWNLOAD_TIMEOUT });
     

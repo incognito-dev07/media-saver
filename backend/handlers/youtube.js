@@ -8,7 +8,6 @@ const execPromise = util.promisify(exec);
 
 module.exports.download = async (url, outputPath) => {
   try {
-    // YouTube needs specific format selection
     const command = `./yt-dlp -f "best[height<=${config.MAX_QUALITY}][ext=mp4]" --no-check-certificate -o "${outputPath}" --quiet "${url}"`;
     await execPromise(command, { timeout: config.DOWNLOAD_TIMEOUT });
     
@@ -46,7 +45,7 @@ module.exports.download = async (url, outputPath) => {
     } catch (altError) {
       logger.error(`YouTube alternative format failed: ${altError.message}`);
       
-      // Try one more time with different approach
+      // Try with different approach
       try {
         logger.info('Trying final method for YouTube...');
         const finalCommand = `./yt-dlp -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best" --no-check-certificate -o "${outputPath}" --quiet "${url}"`;
