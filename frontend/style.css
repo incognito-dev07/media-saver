@@ -1,19 +1,20 @@
 :root {
-  --bg-primary: #0c0a10;
-  --bg-secondary: #131116;
-  --bg-tertiary: #1e1a24;
-  --text-primary: #e8e2f0;
-  --text-secondary: #a394b8;
-  --accent-primary: #9d4edd;
-  --accent-hover: #7e3ab8;
+  --bg-primary: #0a0a0c;
+  --bg-secondary: #121216;
+  --bg-tertiary: #1a1a22;
+  --text-primary: #f0eaff;
+  --text-secondary: #a89fc0;
+  --accent-primary: #9d63d5;
+  --accent-hover: #9d63d5;
   --accent-success: #10b981;
   --accent-danger: #ef4444;
-  --border-color: #332d38;
-  --input-bg: #1e1a24;
-  --input-border: #332d38;
-  --card-bg: #131116;
+  --border-color: #2a2733;
+  --input-bg: #1a1a22;
+  --input-border: #343040;
   --shadow-color: rgba(0, 0, 0, 0.5);
+  --card-bg: #121216;
   --button-text: #ffffff;
+  --button-primary: #7b3fb0;
 }
 
 * {
@@ -23,12 +24,13 @@
 }
 
 body {
-  font-family: Sans-Serif;
+  font-family: Times New Roman;
   background: var(--bg-primary);
   color: var(--text-primary);
   min-height: 100vh;
   line-height: 1.6;
   user-select: none;
+  font-weight: 600;
 }
 
 /* Navbar */
@@ -106,7 +108,7 @@ body {
 .first-message {
   color: var(--text-secondary);
   margin-bottom: 1.5rem;
-  font-size: 1.1rem;
+  font-size: 1rem;
 }
 
 .platform-strip {
@@ -214,10 +216,11 @@ body {
   justify-content: center;
   gap: 0.5rem;
   color: var(--button-text);
+  font-family: inherit;
 }
 
 .btn-primary {
-  background: var(--accent-primary);
+  background: var(--button-primary);
 }
 
 .btn-primary:hover {
