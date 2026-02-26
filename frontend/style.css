@@ -1,17 +1,17 @@
 :root {
-  --bg-primary: #0a0c10;
-  --bg-secondary: #111316;
-  --bg-tertiary: #1a1d24;
-  --text-primary: #e2e8f0;
-  --text-secondary: #94a3b8;
-  --accent-primary: #3b82f6;
-  --accent-hover: #2563eb;
+  --bg-primary: #0c0a10;
+  --bg-secondary: #131116;
+  --bg-tertiary: #1e1a24;
+  --text-primary: #e8e2f0;
+  --text-secondary: #a394b8;
+  --accent-primary: #9d4edd;
+  --accent-hover: #7e3ab8;
   --accent-success: #10b981;
   --accent-danger: #ef4444;
-  --border-color: #2d3748;
-  --input-bg: #1a1d24;
-  --input-border: #2d3748;
-  --card-bg: #111316;
+  --border-color: #332d38;
+  --input-bg: #1e1a24;
+  --input-border: #332d38;
+  --card-bg: #131116;
   --shadow-color: rgba(0, 0, 0, 0.5);
   --button-text: #ffffff;
 }
@@ -23,7 +23,7 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  font-family: Sans-Serif;
   background: var(--bg-primary);
   color: var(--text-primary);
   min-height: 100vh;
