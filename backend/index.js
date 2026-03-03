@@ -34,97 +34,25 @@ setInterval(() => {
   helpers.cleanupOldFiles();
 }, config.CLEANUP_INTERVAL);
 
-// ==================== KEEP ALIVE MECHANISM (FIXED FOR RENDER) ====================
+// ==================== SIMPLE KEEP ALIVE ====================
 
-// Ping endpoint for keep-alive
+// Ping endpoint
 app.get('/api/ping', (req, res) => {
-  res.json({ 
-    status: 'alive', 
-    timestamp: Date.now(),
-    uptime: process.uptime(),
-    memory: process.memoryUsage().heapUsed / 1024 / 1024 + 'MB'
-  });
+  res.json({ status: 'alive', time: Date.now() });
 });
 
-// Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'healthy', 
-    uptime: process.uptime(),
-    downloads: global.downloadStatus.size,
-    users: global.userStats.size,
-    timestamp: Date.now()
-  });
-});
-
-// Self-ping mechanism that actually works on Render
+// Simple keep-alive that actually works
 if (process.env.NODE_ENV === 'production') {
-  // Get your Render URL from environment variable (SET THIS IN RENDER DASHBOARD)
-  const RENDER_URL = process.env.RENDER_EXTERNAL_URL;
+  const RENDER_URL = process.env.RENDER_EXTERNAL_URL || 'https://media-downloader-7ovf.onrender.com';
   
-  if (!RENDER_URL) {
-    logger.warn('RENDER_EXTERNAL_URL not set. Keep-alive may not work properly!');
-  }
-
-  // Function to ping the service
-  async function keepAlive() {
-    // Try multiple URLs to ensure one works
-    const urlsToTry = [];
-    
-    // Add the Render URL if available (this is the one that actually works)
-    if (RENDER_URL) {
-      urlsToTry.push(`${RENDER_URL}/api/ping`);
-    }
-    
-    // Add localhost as fallback (might work, might not)
-    urlsToTry.push(`http://localhost:${PORT}/api/ping`);
-    urlsToTry.push(`http://127.0.0.1:${PORT}/api/ping`);
-    
-    for (const url of urlsToTry) {
-      try {
-        const response = await axios.get(url, { 
-          timeout: 10000,
-          headers: { 
-            'User-Agent': 'Render-KeepAlive/1.0',
-            'Cache-Control': 'no-cache'
-          }
-        });
-        
-        if (response.status === 200) {
-          logger.debug(`Keep-alive successful via: ${url}`);
-          return true;
-        }
-      } catch (error) {
-        logger.debug(`Keep-alive failed for ${url}: ${error.message}`);
-        // Continue to next URL
-      }
-    }
-    
-    logger.error('All keep-alive attempts failed');
-    return false;
-  }
-
-  // Run keep-alive every 4 minutes (Render free tier sleeps after 15 mins)
-  setInterval(keepAlive, 4 * 60 * 1000);
-  
-  // Run immediately on startup (after 10 seconds)
-  setTimeout(keepAlive, 10000);
-  
-  // Additional: Keep event loop active with file operations
+  // Ping every 4 minutes
   setInterval(() => {
-    try {
-      // Touch a file in /tmp (always writable on Render)
-      const tempFile = path.join('/tmp', 'render-keepalive.txt');
-      fs.writeFileSync(tempFile, Date.now().toString());
-    } catch (error) {
-      // Ignore file errors
-    }
-  }, 60000); // Every minute
+    axios.get(`${RENDER_URL}/api/ping`, { timeout: 10000 })
+      .then(() => console.log('Keep-alive ping sent'))
+      .catch(() => {});
+  }, 4 * 60 * 1000);
   
-  logger.info(`🚀 Keep-alive system activated! Pinging every 4 minutes`);
-  if (RENDER_URL) {
-    logger.info(`📡 Using Render URL: ${RENDER_URL}`);
-  }
+  console.log('✅ Keep-alive started - pinging every 4 minutes');
 }
 // ==================== END KEEP ALIVE ====================
 
@@ -172,7 +100,7 @@ app.post('/api/download', async (req, res) => {
     processDownload(url, userId, platform, downloadId).catch(console.error);
 
   } catch (error) {
-    logger.error(`API Error: ${error.message}`);
+    console.error(`API Error: ${error.message}`);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -222,14 +150,14 @@ app.get('/api/file/:downloadId', async (req, res) => {
     const fileStream = fs.createReadStream(filePath);
     fileStream.pipe(res);
     
-    logger.info(`Serving file: ${matchingFile}`);
+    console.log(`Serving file: ${matchingFile}`);
     
     setTimeout(async () => {
       await helpers.safeDelete(filePath);
     }, 60000);
     
   } catch (error) {
-    logger.error(`Error serving file: ${error.message}`);
+    console.error(`Error serving file: ${error.message}`);
     res.status(500).json({ error: 'Error serving file' });
   }
 });
@@ -274,7 +202,7 @@ async function processDownload(url, userId, platform, downloadId) {
         downloadId: downloadId
       });
       
-      logger.info(`Download completed: ${downloadId}`);
+      console.log(`Download completed: ${downloadId}`);
       
       setTimeout(async () => {
         await helpers.safeDelete(downloadPath);
@@ -286,7 +214,7 @@ async function processDownload(url, userId, platform, downloadId) {
     }
     
   } catch (error) {
-    logger.error(`Download failed: ${error.message}`);
+    console.error(`Download failed: ${error.message}`);
     global.downloadStatus.set(downloadId, { 
       status: 'failed', 
       error: error.message,
@@ -304,21 +232,9 @@ async function processDownload(url, userId, platform, downloadId) {
 }
 
 app.listen(PORT, () => {
-  logger.info(`✅ Backend API running on port ${PORT}`);
-  logger.info(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`✅ Backend running on port ${PORT}`);
 });
 
 // Create required directories
 fs.ensureDirSync(config.PATHS.DOWNLOADS);
 fs.ensureDirSync(config.PATHS.LOGS);
-
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  logger.info('SIGTERM received, shutting down');
-  process.exit(0);
-});
-
-process.on('SIGINT', () => {
-  logger.info('SIGINT received, shutting down');
-  process.exit(0);
-});
