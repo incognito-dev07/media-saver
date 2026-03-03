@@ -38,7 +38,10 @@ urlInput.addEventListener('keypress', (e) => {
   if (e.key === 'Enter') startDownload();
 });
 
-window.addEventListener('load', checkLimits);
+window.addEventListener('load', async () => {
+  await checkLimits();
+  await wakeUpServer();
+});
 
 function clearInput() {
   urlInput.value = '';
@@ -46,9 +49,58 @@ function clearInput() {
   urlInput.focus();
 }
 
+// Wake up server on page load
+async function wakeUpServer() {
+  try {
+    const response = await fetchWithTimeout(`${API_BASE_URL}/api/ping`, {}, 5000);
+    if (response.ok) {
+      console.log('Server is awake');
+    }
+  } catch (error) {
+    console.log('Server is sleeping, will wake on first request');
+  }
+}
+
+// Fetch with timeout
+async function fetchWithTimeout(url, options = {}, timeout = 30000) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+  
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+    return response;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    throw error;
+  }
+}
+
+// Fetch with retry (for cold starts)
+async function fetchWithRetry(url, options = {}, maxRetries = 3) {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      if (i > 0) {
+        showStatus(`Waking up server... Attempt ${i + 1}/${maxRetries}`, 'processing');
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+      
+      const response = await fetchWithTimeout(url, options, 30000);
+      return response;
+      
+    } catch (error) {
+      console.log(`Attempt ${i + 1} failed:`, error.message);
+      if (i === maxRetries - 1) throw error;
+    }
+  }
+}
+
 async function checkLimits() {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/limits/${userId}`);
+    const response = await fetchWithTimeout(`${API_BASE_URL}/api/limits/${userId}`, {}, 5000);
     if (response.ok) {
       const data = await response.json();
       remainingSpan.textContent = data.remaining;
@@ -66,14 +118,12 @@ async function startDownload() {
     return;
   }
 
-  // Show loading animation immediately
   downloadBtn.disabled = true;
   downloadBtn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i><span>Processing...</span>';
   
   resultDiv.classList.add('hidden');
   showStatus('Validating URL...', 'processing');
 
-  // Validate URL format
   try {
     new URL(url);
   } catch {
@@ -88,7 +138,8 @@ async function startDownload() {
   }
 
   try {
-    const response = await fetch(`${API_BASE_URL}/api/download`, {
+    // Use retry mechanism for the first request (handles cold start)
+    const response = await fetchWithRetry(`${API_BASE_URL}/api/download`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -97,7 +148,7 @@ async function startDownload() {
         url: url, 
         userId: userId 
       })
-    });
+    }, 3);
 
     const data = await response.json();
 
@@ -122,7 +173,11 @@ async function startDownload() {
     }
 
   } catch (error) {
-    showStatus(error.message || 'Network error. Please try again.', 'error');
+    if (error.name === 'AbortError') {
+      showStatus('Server is taking too long to respond. Please try again.', 'error');
+    } else {
+      showStatus('Network error. Please check your connection.', 'error');
+    }
     resetDownloadButton();
   }
 }
@@ -130,14 +185,14 @@ async function startDownload() {
 function pollDownloadStatus() {
   if (!currentDownloadId) return;
 
-  const maxAttempts = 30;
+  const maxAttempts = 45;
   let attempts = 0;
 
   pollInterval = setInterval(async () => {
     attempts++;
     
     try {
-      const response = await fetch(`${API_BASE_URL}/api/status/${currentDownloadId}`);
+      const response = await fetchWithTimeout(`${API_BASE_URL}/api/status/${currentDownloadId}`, {}, 10000);
       const status = await response.json();
 
       if (status.status === 'completed') {
@@ -152,14 +207,11 @@ function pollDownloadStatus() {
       } else if (attempts >= maxAttempts) {
         clearInterval(pollInterval);
         pollInterval = null;
-        handleDownloadComplete({
-          status: 'completed',
-          file: { title: 'Video ready for download' },
-          downloadId: currentDownloadId
-        });
+        showStatus('Download timeout. Please try again.', 'error');
+        resetDownloadButton();
       } else {
-        const progress = status.progress || Math.min(30 + (attempts * 2), 90);
-        showStatus(`Downloading... ${progress}%`, 'processing');
+        const progress = status.progress || Math.min(30 + (attempts * 1.5), 90);
+        showStatus(`Downloading... ${Math.round(progress)}%`, 'processing');
       }
     } catch (error) {
       console.error('Polling error:', error);
@@ -182,11 +234,6 @@ function handleDownloadComplete(status) {
     
     try {
       const response = await fetch(fileUrl);
-      
-      if (!response.ok) {
-        throw new Error('Download failed');
-      }
-      
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -217,19 +264,13 @@ function handleDownloadComplete(status) {
 function showStatus(message, type) {
   statusDiv.classList.remove('hidden', 'error', 'success', 'processing');
   statusDiv.classList.add(type);
-  statusMessage.textContent = message;
   
-  const spinner = statusDiv.querySelector('.fa-spinner');
   if (type === 'processing') {
-    if (!spinner) {
-      statusDiv.innerHTML = `<i class="fas fa-spinner fa-pulse"></i><span id="statusMessage">${message}</span>`;
-    }
-  } else {
-    if (type === 'error') {
-      statusDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i><span id="statusMessage">${message}</span>`;
-    } else if (type === 'success') {
-      statusDiv.innerHTML = `<i class="fas fa-check-circle"></i><span id="statusMessage">${message}</span>`;
-    }
+    statusDiv.innerHTML = `<i class="fas fa-spinner fa-pulse"></i><span id="statusMessage">${message}</span>`;
+  } else if (type === 'error') {
+    statusDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i><span id="statusMessage">${message}</span>`;
+  } else if (type === 'success') {
+    statusDiv.innerHTML = `<i class="fas fa-check-circle"></i><span id="statusMessage">${message}</span>`;
   }
 }
 
