@@ -8,8 +8,8 @@
 }
 
 body {
-    background: #f9fafb;
-    color: #111827;
+    background: #f5f7fa;
+    color: #2c3e50;
     line-height: 1.5;
     min-height: 100vh;
     -webkit-font-smoothing: antialiased;
@@ -33,7 +33,7 @@ body {
 .header h1 {
     font-size: 28px;
     font-weight: 700;
-    color: #4f46e5;
+    color: #9d4edd;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -42,7 +42,7 @@ body {
 }
 
 .header p {
-    color: #6b7280;
+    color: #7f8c8d;
     font-size: 15px;
 }
 
@@ -56,8 +56,8 @@ body {
     background: #ffffff;
     border-radius: 16px;
     padding: 2rem;
-    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
-    border: 1px solid #e5e7eb;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    border: 1px solid #e8ecf1;
     margin-bottom: 20px;
 }
 
@@ -78,7 +78,7 @@ body {
     left: 14px;
     top: 50%;
     transform: translateY(-50%);
-    color: #9ca3af;
+    color: #b0b8c5;
     font-size: 16px;
     pointer-events: none;
 }
@@ -87,20 +87,21 @@ body {
     width: 100%;
     padding: 0.75rem 2.5rem;
     font-size: 16px;
-    border: 1.5px solid #e5e7eb;
+    border: 1.5px solid #e0e4e9;
     border-radius: 14px;
-    background: #ffffff;
-    color: #111827;
+    background: #fafbfc;
+    color: #2c3e50;
     outline: none;
-    transition: border-color 0.15s ease;
+    transition: border-color 0.15s ease, background 0.15s ease;
 }
 
 #urlInput:focus {
-    border-color: #4f46e5;
+    border-color: #9d4edd;
+    background: #ffffff;
 }
 
 #urlInput::placeholder {
-    color: #9ca3af;
+    color: #a8b2c1;
 }
 
 .clear-btn {
@@ -110,7 +111,7 @@ body {
     transform: translateY(-50%);
     background: none;
     border: none;
-    color: #9ca3af;
+    color: #b0b8c5;
     cursor: pointer;
     padding: 8px;
     font-size: 16px;
@@ -122,8 +123,8 @@ body {
 }
 
 .clear-btn:hover {
-    background: #f3f4f6;
-    color: #4b5563;
+    background: #f0f3f7;
+    color: #5a6c7e;
 }
 
 .download-btn {
@@ -131,7 +132,7 @@ body {
     font-size: 16px;
     font-weight: 600;
     color: #ffffff;
-    background: #4f46e5;
+    background: #9d4edd;
     border: none;
     border-radius: 14px;
     cursor: pointer;
@@ -139,12 +140,16 @@ body {
     align-items: center;
     justify-content: center;
     gap: 8px;
-    transition: background 0.15s;
+    transition: background 0.15s, transform 0.1s;
     white-space: nowrap;
 }
 
 .download-btn:hover {
-    background: #4338ca;
+    background: #8a3cc4;
+}
+
+.download-btn:active {
+    transform: scale(0.98);
 }
 
 .download-btn:disabled {
@@ -160,7 +165,7 @@ body {
     gap: 10px 16px;
     margin-top: 20px;
     padding-top: 20px;
-    border-top: 1px solid #f3f4f6;
+    border-top: 1px solid #edf2f7;
 }
 
 .platform-tag {
@@ -168,15 +173,16 @@ body {
     align-items: center;
     gap: 6px;
     padding: 6px 14px;
-    background: #f3f4f6;
+    background: #f7f9fc;
     border-radius: 30px;
     font-size: 13px;
     font-weight: 500;
-    color: #4b5563;
+    color: #5a6c7e;
+    border: 1px solid #e8ecf1;
 }
 
 .platform-tag i {
-    color: #4f46e5;
+    color: #9d4edd;
     font-size: 14px;
 }
 
@@ -184,18 +190,20 @@ body {
 .status {
     margin-top: 1rem;
     padding: 0.75rem 1rem;
-    background: #eef2ff;
+    background: #f8f0ff;
     border-radius: 14px;
     display: flex;
     align-items: center;
     gap: 10px;
-    color: #4f46e5;
+    color: #9d4edd;
     font-weight: 500;
+    border: 1px solid #e9d5ff;
 }
 
 .status.error {
-    background: #fef2f2;
-    color: #dc2626;
+    background: #fff5f5;
+    color: #e74c3c;
+    border-color: #fad1d1;
 }
 
 .status i {
@@ -206,9 +214,9 @@ body {
 .result {
     margin-top: 20px;
     padding: 20px;
-    background: #f9fafb;
+    background: #fafbfc;
     border-radius: 16px;
-    border: 1px solid #e5e7eb;
+    border: 1px solid #e8ecf1;
 }
 
 .result-header {
@@ -219,17 +227,18 @@ body {
 }
 
 .result-header i {
-    color: #10b981;
+    color: #2ecc71;
     font-size: 24px;
 }
 
 .result-header h3 {
     font-size: 18px;
     font-weight: 600;
+    color: #2c3e50;
 }
 
 .result-filename {
-    color: #6b7280;
+    color: #7f8c8d;
     font-size: 14px;
     margin-bottom: 18px;
     word-break: break-word;
@@ -258,43 +267,42 @@ body {
 }
 
 .save-btn {
-    background: #10b981;
+    background: #2ecc71;
     color: #ffffff;
 }
 
 .save-btn:hover {
-    background: #059669;
+    background: #27ae60;
 }
 
 .new-btn {
     background: #ffffff;
-    color: #4b5563;
-    border: 1.5px solid #e5e7eb;
+    color: #5a6c7e;
+    border: 1.5px solid #e0e4e9;
 }
 
 .new-btn:hover {
-    background: #f9fafb;
-    border-color: #d1d5db;
+    background: #fafbfc;
+    border-color: #ccd3dd;
 }
 
 /* Info Box */
 .info-box {
-    
     padding: 18px;
     background: #ffffff;
     border-radius: 16px;
-    border: 1px solid #e5e7eb;
+    border: 1px solid #e8ecf1;
     margin-bottom: 20px;
-    box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
 }
 
 .info-box-header {
-  display: flex;
-  gap: 0.5rem;
+    display: flex;
+    gap: 0.5rem;
 }
 
 .info-box i {
-    color: #4f46e5;
+    color: #9d4edd;
     font-size: 22px;
     flex-shrink: 0;
 }
@@ -303,11 +311,64 @@ body {
     display: block;
     margin-bottom: 4px;
     font-size: 15px;
+    color: #2c3e50;
 }
 
 .info-box p {
-    color: #6b7280;
+    color: #7f8c8d;
     font-size: 14px;
+}
+
+/* FAQ Section */
+.faq-section {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 18px;
+    border: 1px solid #e8ecf1;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.faq-item {
+    border-bottom: 1px solid #edf2f7;
+}
+
+.faq-item:last-child {
+    border-bottom: none;
+}
+
+.faq-item summary {
+    padding: 16px 0;
+    font-weight: 600;
+    color: #2c3e50;
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.faq-item summary::-webkit-details-marker {
+    display: none;
+}
+
+.faq-item summary::after {
+    content: '\f078';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    font-size: 14px;
+    color: #9d4edd;
+    transition: transform 0.2s;
+}
+
+.faq-item[open] summary::after {
+    transform: rotate(180deg);
+}
+
+.faq-item p {
+    padding-bottom: 16px;
+    color: #7f8c8d;
+    font-size: 14px;
+    line-height: 1.6;
 }
 
 /* Footer */
@@ -315,7 +376,7 @@ body {
     text-align: center;
     padding-top: 24px;
     margin-top: auto;
-    color: #9ca3af;
+    color: #95a5a6;
     font-size: 13px;
 }
 
