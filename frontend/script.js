@@ -23,8 +23,6 @@ const totalSpan = document.getElementById('total');
 let currentDownloadId = null;
 let pollInterval = null;
 
-totalSpan.textContent = '15';
-
 // Event Listeners
 downloadBtn.addEventListener('click', startDownload);
 newDownloadBtn.addEventListener('click', resetForm);
@@ -38,24 +36,10 @@ urlInput.addEventListener('keypress', (e) => {
   if (e.key === 'Enter') startDownload();
 });
 
-window.addEventListener('load', checkLimits);
-
 function clearInput() {
   urlInput.value = '';
   clearBtn.style.display = 'none';
   urlInput.focus();
-}
-
-async function checkLimits() {
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/limits/${userId}`);
-    if (response.ok) {
-      const data = await response.json();
-      remainingSpan.textContent = data.remaining;
-    }
-  } catch (error) {
-    console.error('Failed to check limits:', error);
-  }
 }
 
 // Simple function with retry
@@ -66,7 +50,6 @@ async function fetchWithRetry(url, options, retries = 2) {
       return response;
     } catch (error) {
       if (i === retries) throw error;
-      // Wait 2 seconds before retry
       await new Promise(r => setTimeout(r, 2000));
     }
   }
@@ -100,7 +83,6 @@ async function startDownload() {
   }
 
   try {
-    // Try with retry
     const response = await fetchWithRetry(`${API_BASE_URL}/api/download`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -164,10 +146,6 @@ function handleDownloadComplete(status) {
   };
   
   resetDownloadButton();
-  
-  const current = parseInt(remainingSpan.textContent);
-  remainingSpan.textContent = Math.max(0, current - 1);
-  
   currentDownloadId = null;
 }
 

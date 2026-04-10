@@ -3,112 +3,88 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>Incognito Hub · Media Saver</title>
+    <title>Media Saver · Free Video Downloader</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
-  <body>
-    <!-- Navbar -->
-    <nav class="navbar">
-      <div class="nav-container">
-        <div class="logo">
-          <i class="fas fa-code"></i>
-          <span>Incognito Hub</span>
-        </div>
-        <div class="limit-badge">
-          <i class="fas fa-chart-line"></i>
-          <span id="remaining">15</span>/<span id="total">15</span>
-        </div>
-      </div>
-    </nav>
+<body>
+    <div class="app">
+        <!-- Header -->
+        <header class="header">
+            <h1><i class="fas fa-cloud-download-alt"></i> Media Saver</h1>
+            <p>Download videos from TikTok, Instagram, Facebook, and YouTube</p>
+        </header>
 
-    <!-- Main Content -->
-    <div class="container">
-      <div class="hero">
-        <h1><i class="fas fa-cloud-download-alt"></i> Media Saver</h1>
-        <p class="first-message">Download Any Videos, Any Platform - Free & Fast Without Watermarks</p>
-            
-        <div class="platform-strip">
-          <span><i class="fab fa-tiktok"></i></span>
-          <span><i class="fab fa-facebook"></i></span>
-          <span><i class="fab fa-instagram"></i></span>
-          <span><i class="fab fa-youtube"></i></span>
-        </div>
-      </div>
+        <!-- Main Content -->
+        <main class="main">
+            <!-- Download Card -->
+            <div class="download-card">
+                <div class="input-group">
+                    <div class="input-wrapper">
+                        <i class="fas fa-link input-icon"></i>
+                        <input type="url" id="urlInput" placeholder="Paste video link here..." autocomplete="off" enterkeyhint="done">
+                        <button id="clearBtn" class="clear-btn" style="display: none;" aria-label="Clear input">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <button id="downloadBtn" class="download-btn">
+                        <i class="fas fa-download"></i>
+                        <span>Download</span>
+                    </button>
+                </div>
 
-      <!-- Download Card -->
-      <div class="download-card">
-        <div class="input-group">
-          <div class="input-wrapper">
-            <i class="fas fa-link input-icon"></i>
-            <input type="url" id="urlInput" placeholder="Paste video link here..." autocomplete="off">
-            <button id="clearBtn" class="clear-btn" style="display: none;">
-              <i class="fas fa-times"></i>
-            </button>
-          </div>
-          <button id="downloadBtn" class="btn btn-primary download-btn">
-            <i class="fas fa-download"></i>
-            <span>Download</span>
-          </button>
-        </div>
+                <!-- Status -->
+                <div id="status" class="status hidden">
+                    <i class="fas fa-spinner fa-pulse"></i>
+                    <span id="statusMessage">Processing...</span>
+                </div>
 
-        <!-- Status Area -->
-        <div id="status" class="status hidden">
-          <i class="fas fa-spinner fa-pulse"></i>
-          <span id="statusMessage">Processing...</span>
-        </div>
+                <!-- Result -->
+                <div id="result" class="result hidden">
+                    <div class="result-header">
+                        <i class="fas fa-check-circle"></i>
+                        <h3>Download Ready</h3>
+                    </div>
+                    <p class="result-filename" id="videoTitle">Video ready for download</p>
+                    <div class="result-actions">
+                        <a id="downloadLink" class="btn save-btn">
+                            <i class="fas fa-save"></i>
+                            Save Video
+                        </a>
+                        <button id="newDownloadBtn" class="btn new-btn">
+                            <i class="fas fa-plus"></i>
+                            New Download
+                        </button>
+                    </div>
+                </div>
 
-        <!-- Result Area -->
-        <div id="result" class="result hidden">
-          <div class="result-header">
-            <i class="fas fa-check-circle"></i>
-            <h3>Download Complete</h3>
-          </div>
-          <div class="video-info" id="videoInfo">
-            <i class="fas fa-film"></i>
-            <span id="videoTitle">Video ready for download</span>
-          </div>
-          <div class="result-actions">
-            <a id="downloadLink" class="btn btn-success action-btn">
-              <i class="fas fa-cloud-download-alt"></i>
-              <span>Save Video</span>
-            </a>
-            <button id="newDownloadBtn" class="btn btn-secondary action-btn">
-              <i class="fas fa-redo"></i>
-              <span>New Download</span>
-            </button>
-          </div>
-        </div>
-      </div>
+                <!-- Supported Platforms -->
+                <div class="supported-platforms">
+                    <span class="platform-tag"><i class="fab fa-tiktok"></i> TikTok</span>
+                    <span class="platform-tag"><i class="fab fa-instagram"></i> Instagram</span>
+                    <span class="platform-tag"><i class="fab fa-facebook"></i> Facebook</span>
+                    <span class="platform-tag"><i class="fab fa-youtube"></i> YouTube</span>
+                </div>
+            </div>
 
-      <!-- Features -->
-      <div class="features">
-        <h2 class="features-heading"><i class="fas fa-star"></i> Features</h2>
-        <div class="feature-grid">
-          <div class="feature">
-            <i class="fas fa-bolt"></i>
-            <h3>Fast Downloads</h3>
-            <p>High-speed video processing</p>
-          </div>
-          <div class="feature">
-            <i class="fas fa-video"></i>
-            <h3>HD Quality</h3>
-            <p>Up to 720p resolution</p>
-          </div>
-          <div class="feature">
-            <i class="fas fa-globe"></i>
-            <h3>Multi-Platform</h3>
-            <p>Supports multiple media platforms</p>
-          </div>
-        </div>
-      </div>
+            <!-- Info Box -->
+            <div class="info-box">
+                
+                <div class="info-box-header">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>How it works</strong>
+                </div>
+                    <p>Paste a video link from any supported platform, wait for processing, then save to your device.</p>
+            </div>
+        </main>
 
-      <!-- Footer -->
-      <div class="footer">
-        <p><i class="far fa-copyright"></i> 2026 Incognito. All rights reserved</p>
-      </div>
+        <!-- Footer -->
+        <footer class="footer">
+            <p><i class="far fa-copyright"></i> 2026 Incognito. All rights reserved</p>
+            <p class="footer-note">For personal use only. Respect copyright laws.</p>
+        </footer>
     </div>
 
     <script src="script.js"></script>
-  </body>
+</body>
 </html>
