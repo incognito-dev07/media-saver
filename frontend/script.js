@@ -1,4 +1,3 @@
-// Configuration
 const API_BASE_URL = 'https://media-downloader-7ovf.onrender.com';
 let userId = localStorage.getItem('userId');
 
@@ -7,7 +6,6 @@ if (!userId) {
   localStorage.setItem('userId', userId);
 }
 
-// DOM Elements
 const urlInput = document.getElementById('urlInput');
 const downloadBtn = document.getElementById('downloadBtn');
 const clearBtn = document.getElementById('clearBtn');
@@ -23,7 +21,6 @@ const totalSpan = document.getElementById('total');
 let currentDownloadId = null;
 let pollInterval = null;
 
-// Event Listeners
 downloadBtn.addEventListener('click', startDownload);
 newDownloadBtn.addEventListener('click', resetForm);
 clearBtn.addEventListener('click', clearInput);
@@ -42,7 +39,6 @@ function clearInput() {
   urlInput.focus();
 }
 
-// Simple function with retry
 async function fetchWithRetry(url, options, retries = 2) {
   for (let i = 0; i <= retries; i++) {
     try {
