@@ -1,98 +1,133 @@
+<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
   <title>Media Saver - Free Video Downloader</title>
+  <meta name="description" content="Download videos from TikTok, Instagram, Facebook, and YouTube for free">
+  <meta name="theme-color" content="#9d4edd">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="app">
-    <header class="header">
-      <h1><i class="fas fa-cloud-download-alt"></i> Media Saver</h1>
-      <p>Download videos from TikTok, Instagram, Facebook, and YouTube</p>
-    </header>
+    <!-- Online Content -->
+    <div id="onlineContent">
+      <header class="header">
+        <h1><i class="fas fa-cloud-download-alt"></i> Media Saver</h1>
+        <p>Download videos from TikTok, Instagram, Facebook, and YouTube</p>
+      </header>
 
-    <main class="main">
-      <div class="download-card">
-        <div class="input-group">
-          <div class="input-wrapper">
-            <i class="fas fa-link input-icon"></i>
-            <input type="url" id="urlInput" placeholder="Paste video link here..." autocomplete="off" enterkeyhint="done">
-            <button id="clearBtn" class="clear-btn" style="display: none;" aria-label="Clear input">
-              <i class="fas fa-times"></i>
+      <main class="main">
+        <div class="download-card">
+          <div class="input-group">
+            <div class="input-wrapper">
+              <i class="fas fa-link input-icon"></i>
+              <input type="url" id="urlInput" placeholder="Paste video link here..." autocomplete="off" enterkeyhint="done">
+              <button id="clearBtn" class="clear-btn" style="display: none;" aria-label="Clear input">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+            <button id="downloadBtn" class="download-btn">
+              <i class="fas fa-download"></i>
+              <span>Download</span>
             </button>
           </div>
-          <button id="downloadBtn" class="download-btn">
-            <i class="fas fa-download"></i>
-            <span>Download</span>
+
+          <div id="status" class="status hidden">
+            <i class="fas fa-spinner fa-pulse"></i>
+            <span id="statusMessage">Processing...</span>
+          </div>
+
+          <div id="result" class="result hidden">
+            <div class="result-header">
+              <i class="fas fa-check-circle"></i>
+              <h3>Download Ready</h3>
+            </div>
+            <p class="result-filename" id="videoTitle">Video ready for download</p>
+            <div class="result-actions">
+              <a id="downloadLink" class="btn save-btn">
+                <i class="fas fa-save"></i> Save Video
+              </a>
+              <button id="newDownloadBtn" class="btn new-btn">
+                <i class="fas fa-plus"></i> New Download
+              </button>
+            </div>
+          </div>
+
+          <div class="supported-platforms">
+            <span class="platform-tag"><i class="fab fa-facebook"></i> Facebook</span>
+            <span class="platform-tag"><i class="fab fa-tiktok"></i> TikTok</span>
+            <span class="platform-tag"><i class="fab fa-instagram"></i> Instagram</span>
+            <span class="platform-tag"><i class="fab fa-youtube"></i> YouTube</span>
+          </div>
+        </div>
+
+        <div class="info-box">
+          <div class="info-box-header">
+            <i class="fas fa-info-circle"></i>
+            <strong>How it works</strong>
+          </div>
+          <p>Paste a video link from any supported platform, wait for processing, then save to your device.</p>
+        </div>
+
+        <div class="faq-section">
+          <details class="faq-item">
+            <summary>Is this service really free?</summary>
+            <p>Yes! Media Saver is completely free to use. There are no hidden fees or premium features.</p>
+          </details>
+          <details class="faq-item">
+            <summary>What's the maximum video quality?</summary>
+            <p>We support up to 720p quality for most platforms, providing an excellent balance between quality and file size.</p>
+          </details>
+          <details class="faq-item">
+            <summary>How many videos can I download?</summary>
+            <p>You can download up to 15 videos per hour. This limit helps us maintain fast speeds for all users.</p>
+          </details>
+        </div>
+      </main>
+
+      <footer class="footer">
+        <p><i class="far fa-copyright"></i> 2026 Incognito. All rights reserved</p>
+        <p class="footer-note">For personal use only. Respect copyright laws.</p>
+      </footer>
+    </div>
+
+    <!-- Offline Content -->
+    <div id="offlineContent" class="offline-container hidden">
+      <div class="offline-card">
+        <div class="offline-icon">
+          <i class="fas fa-wifi"></i>
+        </div>
+        <h2>You're Offline</h2>
+        <p>No internet connection detected. Media Saver requires an active internet connection to download videos.</p>
+        <div class="offline-actions">
+          <button class="btn btn-primary" onclick="window.location.reload()">
+            <i class="fas fa-sync-alt"></i> Try Again
           </button>
         </div>
-
-        <div id="status" class="status hidden">
-          <i class="fas fa-spinner fa-pulse"></i>
-          <span id="statusMessage">Processing...</span>
-        </div>
-
-        <div id="result" class="result hidden">
-          <div class="result-header">
-            <i class="fas fa-check-circle"></i>
-            <h3>Download Ready</h3>
+        <div class="offline-features">
+          <div class="feature-item">
+            <i class="fas fa-download"></i>
+            <span>Download videos when online</span>
           </div>
-          <p class="result-filename" id="videoTitle">Video ready for download</p>
-          <div class="result-actions">
-            <a id="downloadLink" class="btn save-btn">
-              <i class="fas fa-save"></i> Save Video
-            </a>
-            <button id="newDownloadBtn" class="btn new-btn">
-              <i class="fas fa-plus"></i>  New Download
-            </button>
+          <div class="feature-item">
+            <i class="fas fa-mobile-alt"></i>
+            <span>Install app for quick mobile access</span>
+          </div>
+          <div class="feature-item">
+            <i class="fas fa-shield-alt"></i>
+            <span>Free and secure service</span>
           </div>
         </div>
-
-        <div class="supported-platforms">
-          <span class="platform-tag"><i class="fab fa-facebook"></i> Facebook</span>
-          <span class="platform-tag"><i class="fab fa-tiktok"></i> TikTok</span>
-          <span class="platform-tag"><i class="fab fa-instagram"></i> Instagram</span>
-          <span class="platform-tag"><i class="fab fa-youtube"></i> YouTube</span>
-        </div>
       </div>
-
-      <div class="info-box">
-        <div class="info-box-header">
-          <i class="fas fa-info-circle"></i>
-          <strong>How it works</strong>
-        </div>
-        <p>Paste a video link from any supported platform, wait for processing, then save to your device.</p>
-      </div>
-
-      <div class="faq-section">
-        <details class="faq-item">
-          <summary>Is this service really free?</summary>
-          <p>Yes! Media Saver is completely free to use. There are no hidden fees or premium features.</p>
-        </details>
-        <details class="faq-item">
-          <summary>What's the maximum video quality?</summary>
-          <p>We support up to 720p quality for most platforms, providing an excellent balance between quality and file size.</p>
-        </details>
-        <details class="faq-item">
-          <summary>How many videos can I download?</summary>
-          <p>You can download up to 15 videos per hour. This limit helps us maintain fast speeds for all users.</p>
-        </details>
-        <details class="faq-item">
-          <summary>Is my privacy protected?</summary>
-          <p>Yes! Videos are processed securely and temporary server copies are deleted after 30 minutes.</p>
-        </details>
-      </div>
-    </main>
-
-    <footer class="footer">
-      <p><i class="far fa-copyright"></i> 2026 Incognito. All rights reserved</p>
-      <p class="footer-note">For personal use only. Respect copyright laws.</p>
-    </footer>
+    </div>
   </div>
 
   <script src="script.js"></script>
+  <script src="pwa.js"></script>
 </body>
 </html>
