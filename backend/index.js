@@ -1,3 +1,4 @@
+// index.js - Removed userStats and rate limiting
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -27,7 +28,6 @@ app.use((req, res, next) => {
 
 // Global status tracking
 global.downloadStatus = new Map();
-global.userStats = new Map();
 
 // Cleanup interval
 setInterval(() => {
@@ -68,7 +68,7 @@ app.get('/', (req, res) => {
 // Download video endpoint
 app.post('/api/download', async (req, res) => {
   try {
-    const { url, userId = 'anonymous' } = req.body;
+    const { url } = req.body;
     
     if (!url) {
       return res.status(400).json({ error: 'URL is required' });
@@ -83,11 +83,6 @@ app.post('/api/download', async (req, res) => {
       return res.status(400).json({ error: 'Platform not supported' });
     }
 
-    const rateLimitCheck = await helpers.checkRateLimit(userId);
-    if (!rateLimitCheck.allowed) {
-      return res.status(429).json({ error: 'Rate limit exceeded. Try again later.' });
-    }
-
     const downloadId = Date.now() + '_' + Math.random().toString(36).substring(7);
 
     res.json({ 
@@ -97,7 +92,7 @@ app.post('/api/download', async (req, res) => {
       downloadId
     });
 
-    processDownload(url, userId, platform, downloadId).catch(console.error);
+    processDownload(url, platform, downloadId).catch(console.error);
 
   } catch (error) {
     console.error(`API Error: ${error.message}`);
@@ -113,19 +108,6 @@ app.get('/api/status/:downloadId', (req, res) => {
     downloadId: downloadId
   };
   res.json(status);
-});
-
-// Get user limits
-app.get('/api/limits/:userId', (req, res) => {
-  const { userId } = req.params;
-  const stats = global.userStats.get(userId) || { downloads: 0 };
-  const remaining = Math.max(0, config.MAX_REQUESTS_PER_USER - (stats.downloads || 0));
-  
-  res.json({
-    remaining,
-    total: config.MAX_REQUESTS_PER_USER,
-    resetTime: config.TIME_WINDOW
-  });
 });
 
 // Serve downloaded files
@@ -163,7 +145,7 @@ app.get('/api/file/:downloadId', async (req, res) => {
 });
 
 // Download processing function
-async function processDownload(url, userId, platform, downloadId) {
+async function processDownload(url, platform, downloadId) {
   const filename = `${downloadId}.mp4`;
   const downloadPath = path.join(config.PATHS.DOWNLOADS, filename);
   
@@ -174,10 +156,6 @@ async function processDownload(url, userId, platform, downloadId) {
   });
   
   try {
-    const stats = global.userStats.get(userId) || { downloads: 0 };
-    stats.downloads = (stats.downloads || 0) + 1;
-    global.userStats.set(userId, stats);
-
     global.downloadStatus.set(downloadId, { 
       status: 'downloading', 
       progress: 30,
@@ -186,6 +164,12 @@ async function processDownload(url, userId, platform, downloadId) {
     
     const handler = require(`./handlers/${platform}`);
     const result = await handler.download(url, downloadPath);
+    
+    global.downloadStatus.set(downloadId, { 
+      status: 'downloading', 
+      progress: 70,
+      downloadId: downloadId 
+    });
     
     if (await fs.pathExists(downloadPath)) {
       const fileStats = await fs.stat(downloadPath);
@@ -222,12 +206,6 @@ async function processDownload(url, userId, platform, downloadId) {
     });
     
     await helpers.safeDelete(downloadPath);
-    
-    const stats = global.userStats.get(userId);
-    if (stats && stats.downloads > 0) {
-      stats.downloads--;
-      global.userStats.set(userId, stats);
-    }
   }
 }
 

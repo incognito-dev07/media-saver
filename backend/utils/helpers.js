@@ -1,12 +1,7 @@
+// helpers.js - Removed rate limiter
 const fs = require('fs-extra');
 const path = require('path');
-const { RateLimiterMemory } = require('rate-limiter-flexible');
 const config = require('../config');
-
-const rateLimiter = new RateLimiterMemory({
-  points: config.MAX_REQUESTS_PER_USER,
-  duration: config.TIME_WINDOW,
-});
 
 module.exports = {
   checkPlatform(url) {
@@ -31,15 +26,6 @@ module.exports = {
       return true;
     } catch {
       return false;
-    }
-  },
-
-  async checkRateLimit(userId) {
-    try {
-      await rateLimiter.consume(userId);
-      return { allowed: true };
-    } catch (error) {
-      return { allowed: false };
     }
   },
 

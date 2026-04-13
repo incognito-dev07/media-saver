@@ -9,14 +9,13 @@ if (!userId) {
 const urlInput = document.getElementById('urlInput');
 const downloadBtn = document.getElementById('downloadBtn');
 const clearBtn = document.getElementById('clearBtn');
+const pasteBtn = document.getElementById('pasteBtn');
 const statusDiv = document.getElementById('status');
 const statusMessage = document.getElementById('statusMessage');
 const resultDiv = document.getElementById('result');
 const videoTitle = document.getElementById('videoTitle');
 const downloadLink = document.getElementById('downloadLink');
 const newDownloadBtn = document.getElementById('newDownloadBtn');
-const remainingSpan = document.getElementById('remaining');
-const totalSpan = document.getElementById('total');
 
 let currentDownloadId = null;
 let pollInterval = null;
@@ -24,10 +23,33 @@ let pollInterval = null;
 downloadBtn.addEventListener('click', startDownload);
 newDownloadBtn.addEventListener('click', resetForm);
 clearBtn.addEventListener('click', clearInput);
+pasteBtn.addEventListener('click', handlePaste);
 
-urlInput.addEventListener('input', () => {
-  clearBtn.style.display = urlInput.value ? 'flex' : 'none';
-});
+urlInput.addEventListener('input', updateButtonVisibility);
+
+function updateButtonVisibility() {
+  if (urlInput.value) {
+    pasteBtn.style.display = 'none';
+    clearBtn.style.display = 'flex';
+  } else {
+    pasteBtn.style.display = 'flex';
+    clearBtn.style.display = 'none';
+  }
+}
+
+async function handlePaste() {
+  try {
+    const text = await navigator.clipboard.readText();
+    if (text) {
+      urlInput.value = text;
+      updateButtonVisibility();
+    }
+  } catch (err) {
+    urlInput.focus();
+    showStatus('Please long press to paste', 'error');
+    setTimeout(() => statusDiv.classList.add('hidden'), 2000);
+  }
+}
 
 urlInput.addEventListener('keypress', (e) => {
   if (e.key === 'Enter') startDownload();
@@ -35,7 +57,7 @@ urlInput.addEventListener('keypress', (e) => {
 
 function clearInput() {
   urlInput.value = '';
-  clearBtn.style.display = 'none';
+  updateButtonVisibility();
   urlInput.focus();
 }
 
@@ -95,7 +117,7 @@ async function startDownload() {
 
     if (data.downloadId) {
       currentDownloadId = data.downloadId;
-      showStatus('Processing video...', 'processing');
+      showStatus('Processing video... 0%', 'processing');
       pollDownloadStatus();
     }
 
@@ -113,7 +135,9 @@ function pollDownloadStatus() {
       const response = await fetch(`${API_BASE_URL}/api/status/${currentDownloadId}`);
       const status = await response.json();
 
-      if (status.status === 'completed') {
+      if (status.status === 'downloading' && status.progress) {
+        showStatus(`Processing video... ${status.progress}%`, 'processing');
+      } else if (status.status === 'completed') {
         clearInterval(pollInterval);
         handleDownloadComplete(status);
       } else if (status.status === 'failed') {
@@ -174,3 +198,5 @@ function resetForm() {
     pollInterval = null;
   }
 }
+
+updateButtonVisibility();
