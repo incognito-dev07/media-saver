@@ -11,7 +11,6 @@ module.exports.download = async (url, outputPath) => {
     const command = `./yt-dlp -f "best[height<=${config.MAX_QUALITY}]" --cookies cookies.txt --no-check-certificate -o "${outputPath}" --quiet "${url}"`;
     await execPromise(command, { timeout: config.DOWNLOAD_TIMEOUT });
     
-    // Check if file was actually created
     if (!await fs.pathExists(outputPath)) {
       throw new Error('File not created');
     }
@@ -27,7 +26,6 @@ module.exports.download = async (url, outputPath) => {
   } catch (error) {
     logger.error(`Instagram download failed: ${error.message}`);
     
-    // Try alternative method
     try {
       logger.info('Trying alternative method for Instagram...');
       const altCommand = `./yt-dlp -f "mp4" --no-check-certificate -o "${outputPath}" --quiet "${url}"`;

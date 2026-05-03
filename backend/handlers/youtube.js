@@ -11,7 +11,6 @@ module.exports.download = async (url, outputPath) => {
     const command = `./yt-dlp -f "best[height<=${config.MAX_QUALITY}][ext=mp4]" --no-check-certificate -o "${outputPath}" --quiet "${url}"`;
     await execPromise(command, { timeout: config.DOWNLOAD_TIMEOUT });
     
-    // Check if file was created
     if (!await fs.pathExists(outputPath)) {
       throw new Error('File not created');
     }
@@ -27,7 +26,6 @@ module.exports.download = async (url, outputPath) => {
   } catch (error) {
     logger.error(`YouTube download failed: ${error.message}`);
     
-    // Try alternative format
     try {
       logger.info('Trying alternative format for YouTube...');
       const altCommand = `./yt-dlp -f "best" --no-check-certificate -o "${outputPath}" --quiet "${url}"`;
@@ -45,7 +43,6 @@ module.exports.download = async (url, outputPath) => {
     } catch (altError) {
       logger.error(`YouTube alternative format failed: ${altError.message}`);
       
-      // Try with different approach
       try {
         logger.info('Trying final method for YouTube...');
         const finalCommand = `./yt-dlp -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best" --no-check-certificate -o "${outputPath}" --quiet "${url}"`;

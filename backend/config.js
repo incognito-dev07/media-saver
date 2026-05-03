@@ -1,4 +1,3 @@
-// config.js - Removed rate limit settings
 require('dotenv').config();
 const path = require('path');
 

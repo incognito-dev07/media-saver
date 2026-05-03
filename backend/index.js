@@ -1,4 +1,3 @@
-// index.js - Removed userStats and rate limiting
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -13,12 +12,10 @@ const logger = require('./utils/logger');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// No-cache headers
 app.use((req, res, next) => {
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
   res.set('Pragma', 'no-cache');
@@ -26,26 +23,20 @@ app.use((req, res, next) => {
   next();
 });
 
-// Global status tracking
 global.downloadStatus = new Map();
 
-// Cleanup interval
 setInterval(() => {
   helpers.cleanupOldFiles();
 }, config.CLEANUP_INTERVAL);
 
-// ==================== SIMPLE KEEP ALIVE ====================
 
-// Ping endpoint
 app.get('/api/ping', (req, res) => {
   res.json({ status: 'alive', time: Date.now() });
 });
 
-// Simple keep-alive that actually works
 if (process.env.NODE_ENV === 'production') {
   const RENDER_URL = process.env.RENDER_EXTERNAL_URL || 'https://media-downloader-7ovf.onrender.com';
   
-  // Ping every 4 minutes
   setInterval(() => {
     axios.get(`${RENDER_URL}/api/ping`, { timeout: 10000 })
       .then(() => console.log('Keep-alive ping sent'))
@@ -54,9 +45,7 @@ if (process.env.NODE_ENV === 'production') {
   
   console.log('✅ Keep-alive started - pinging every 4 minutes');
 }
-// ==================== END KEEP ALIVE ====================
 
-// API Routes
 app.get('/', (req, res) => {
   res.json({ 
     status: 'active', 
@@ -65,7 +54,6 @@ app.get('/', (req, res) => {
   });
 });
 
-// Download video endpoint
 app.post('/api/download', async (req, res) => {
   try {
     const { url } = req.body;
@@ -100,7 +88,6 @@ app.post('/api/download', async (req, res) => {
   }
 });
 
-// Check status endpoint
 app.get('/api/status/:downloadId', (req, res) => {
   const { downloadId } = req.params;
   const status = global.downloadStatus.get(downloadId) || { 
@@ -110,7 +97,6 @@ app.get('/api/status/:downloadId', (req, res) => {
   res.json(status);
 });
 
-// Serve downloaded files
 app.get('/api/file/:downloadId', async (req, res) => {
   const { downloadId } = req.params;
   
@@ -144,7 +130,6 @@ app.get('/api/file/:downloadId', async (req, res) => {
   }
 });
 
-// Download processing function
 async function processDownload(url, platform, downloadId) {
   const filename = `${downloadId}.mp4`;
   const downloadPath = path.join(config.PATHS.DOWNLOADS, filename);
@@ -213,6 +198,5 @@ app.listen(PORT, () => {
   console.log(`✅ Backend running on port ${PORT}`);
 });
 
-// Create required directories
 fs.ensureDirSync(config.PATHS.DOWNLOADS);
 fs.ensureDirSync(config.PATHS.LOGS);
